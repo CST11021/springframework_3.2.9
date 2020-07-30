@@ -84,12 +84,12 @@ import org.springframework.util.ObjectUtils;
  此类表示被织入增强后的代理类，在Spring中，我们进行要使用 ProxyFactoryBean 来配置一个，被织入增强后的代理类，如：
 
  <!--要被织入的增强-->
- <bean id="pmonitor" class="com.whz.aop.advice.ControllablePerformanceMonitor" />
+ <bean id="pmonitor" class="com.whz.spring.aop.advice.ControllablePerformanceMonitor" />
  <!--被织入的目标类-->
- <bean id="forumServiceTarget" class="com.whz.aop.advice.ForumService" />
+ <bean id="forumServiceTarget" class="com.whz.spring.aop.advice.ForumService" />
  <!--被织入增强后的代理类-->
  <bean id="forumService" class="org.springframework.aop.framework.ProxyFactoryBean"
- p:interfaces="com.whz.aop.advice.Monitorable"
+ p:interfaces="com.whz.spring.aop.advice.Monitorable"
  p:target-ref="forumServiceTarget"
  p:interceptorNames="pmonitor"
  p:proxyTargetClass="true" />
