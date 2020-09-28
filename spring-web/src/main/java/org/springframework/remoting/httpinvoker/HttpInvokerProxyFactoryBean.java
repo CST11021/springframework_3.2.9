@@ -47,8 +47,7 @@ import org.springframework.beans.factory.FactoryBean;
  * @see org.springframework.remoting.caucho.HessianProxyFactoryBean
  * @see org.springframework.remoting.caucho.BurlapProxyFactoryBean
  */
-public class HttpInvokerProxyFactoryBean extends HttpInvokerClientInterceptor
-		implements FactoryBean<Object> {
+public class HttpInvokerProxyFactoryBean extends HttpInvokerClientInterceptor implements FactoryBean<Object> {
 
 	private Object serviceProxy;
 

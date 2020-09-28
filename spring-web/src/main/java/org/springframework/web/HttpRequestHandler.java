@@ -78,13 +78,13 @@ import javax.servlet.http.HttpServletResponse;
 public interface HttpRequestHandler {
 
 	/**
-	 * Process the given request, generating a response.
+	 * 处理器客户端的HTTP请求
+	 *
 	 * @param request current HTTP request
 	 * @param response current HTTP response
 	 * @throws ServletException in case of general errors
 	 * @throws IOException in case of I/O errors
 	 */
-	void handleRequest(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException;
+	void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException;
 
 }

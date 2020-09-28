@@ -44,16 +44,13 @@ import org.springframework.remoting.support.RemoteInvocationResult;
 public interface HttpInvokerRequestExecutor {
 
 	/**
-	 * Execute a request to send the given remote invocation.
-	 * @param config the HTTP invoker configuration that specifies the
-	 * target service
-	 * @param invocation the RemoteInvocation to execute
-	 * @return the RemoteInvocationResult object
-	 * @throws IOException if thrown by I/O operations
-	 * @throws ClassNotFoundException if thrown during deserialization
-	 * @throws Exception in case of general errors
+	 * 客户端通过该方法，以HTTP协议发起一次远程调用
+	 *
+	 * @param config
+	 * @param invocation
+	 * @return
+	 * @throws Exception
 	 */
-	RemoteInvocationResult executeRequest(HttpInvokerClientConfiguration config, RemoteInvocation invocation)
-			throws Exception;
+	RemoteInvocationResult executeRequest(HttpInvokerClientConfiguration config, RemoteInvocation invocation) throws Exception;
 
 }

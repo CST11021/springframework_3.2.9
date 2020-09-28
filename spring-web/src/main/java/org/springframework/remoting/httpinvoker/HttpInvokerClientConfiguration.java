@@ -27,7 +27,7 @@ package org.springframework.remoting.httpinvoker;
 public interface HttpInvokerClientConfiguration {
 
 	/**
-	 * Return the HTTP URL of the target service.
+	 * 获取要调用的目标服务接口
 	 */
 	String getServiceUrl();
 

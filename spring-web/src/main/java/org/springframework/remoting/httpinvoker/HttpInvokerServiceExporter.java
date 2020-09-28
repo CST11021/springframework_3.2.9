@@ -32,20 +32,7 @@ import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.util.NestedServletException;
 
 /**
- * Servlet-API-based HTTP request handler that exports the specified service bean
- * as HTTP invoker service endpoint, accessible via an HTTP invoker proxy.
- *
- * <p><b>Note:</b> Spring also provides an alternative version of this exporter,
- * for Sun's JRE 1.6 HTTP server: {@link SimpleHttpInvokerServiceExporter}.
- *
- * <p>Deserializes remote invocation objects and serializes remote invocation
- * result objects. Uses Java serialization just like RMI, but provides the
- * same ease of setup as Caucho's HTTP-based Hessian and Burlap protocols.
- *
- * <p><b>HTTP invoker is the recommended protocol for Java-to-Java remoting.</b>
- * It is more powerful and more extensible than Hessian and Burlap, at the
- * expense of being tied to Java. Nevertheless, it is as easy to set up as
- * Hessian and Burlap, which is its main advantage compared to RMI.
+ * 服务端用于处理来自客户端的HTTP请求
  *
  * @author Juergen Hoeller
  * @since 1.1
@@ -55,20 +42,19 @@ import org.springframework.web.util.NestedServletException;
  * @see org.springframework.remoting.caucho.HessianServiceExporter
  * @see org.springframework.remoting.caucho.BurlapServiceExporter
  */
-public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExporter
-		implements HttpRequestHandler {
+public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExporter implements HttpRequestHandler {
 
 	/**
-	 * Reads a remote invocation from the request, executes it,
-	 * and writes the remote invocation result to the response.
+	 * 该方法用于处理来自客户端的请求
+	 *
 	 * @see #readRemoteInvocation(HttpServletRequest)
 	 * @see #invokeAndCreateResult(org.springframework.remoting.support.RemoteInvocation, Object)
 	 * @see #writeRemoteInvocationResult(HttpServletRequest, HttpServletResponse, RemoteInvocationResult)
 	 */
-	public void handleRequest(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		try {
+			// 从HTTP Request获取服务方法的调用信息，并反序列化为RemoteInvocation对象
 			RemoteInvocation invocation = readRemoteInvocation(request);
 			RemoteInvocationResult result = invokeAndCreateResult(invocation, getProxy());
 			writeRemoteInvocationResult(request, response, result);
@@ -79,18 +65,14 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	}
 
 	/**
-	 * Read a RemoteInvocation from the given HTTP request.
-	 * <p>Delegates to
-	 * {@link #readRemoteInvocation(javax.servlet.http.HttpServletRequest, java.io.InputStream)}
-	 * with the
-	 * {@link javax.servlet.ServletRequest#getInputStream() servlet request's input stream}.
-	 * @param request current HTTP request
-	 * @return the RemoteInvocation object
-	 * @throws IOException in case of I/O failure
-	 * @throws ClassNotFoundException if thrown by deserialization
+	 * 从HTTP Request获取服务方法的调用信息，并反序列化为RemoteInvocation对象
+	 *
+	 * @param request
+	 * @return
+	 * @throws IOException
+	 * @throws ClassNotFoundException
 	 */
-	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request)
-			throws IOException, ClassNotFoundException {
+	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request) throws IOException, ClassNotFoundException {
 
 		return readRemoteInvocation(request, request.getInputStream());
 	}
@@ -108,14 +90,12 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @throws IOException in case of I/O failure
 	 * @throws ClassNotFoundException if thrown during deserialization
 	 */
-	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request, InputStream is)
-			throws IOException, ClassNotFoundException {
+	protected RemoteInvocation readRemoteInvocation(HttpServletRequest request, InputStream is) throws IOException, ClassNotFoundException {
 
 		ObjectInputStream ois = createObjectInputStream(decorateInputStream(request, is));
 		try {
 			return doReadRemoteInvocation(ois);
-		}
-		finally {
+		} finally {
 			ois.close();
 		}
 	}
@@ -141,9 +121,7 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @param result the RemoteInvocationResult object
 	 * @throws IOException in case of I/O failure
 	 */
-	protected void writeRemoteInvocationResult(
-			HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result)
-			throws IOException {
+	protected void writeRemoteInvocationResult(HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result) throws IOException {
 
 		response.setContentType(getContentType());
 		writeRemoteInvocationResult(request, response, result, response.getOutputStream());
@@ -164,9 +142,7 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @see #decorateOutputStream
 	 * @see #doWriteRemoteInvocationResult
 	 */
-	protected void writeRemoteInvocationResult(
-			HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result, OutputStream os)
-			throws IOException {
+	protected void writeRemoteInvocationResult(HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result, OutputStream os) throws IOException {
 
 		ObjectOutputStream oos = createObjectOutputStream(decorateOutputStream(request, response, os));
 		try {
@@ -188,8 +164,7 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	 * @return the potentially decorated OutputStream
 	 * @throws IOException in case of I/O failure
 	 */
-	protected OutputStream decorateOutputStream(
-			HttpServletRequest request, HttpServletResponse response, OutputStream os) throws IOException {
+	protected OutputStream decorateOutputStream(HttpServletRequest request, HttpServletResponse response, OutputStream os) throws IOException {
 
 		return os;
 	}

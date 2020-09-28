@@ -45,223 +45,229 @@ import org.springframework.util.StringUtils;
  *
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @since 1.1
  * @see SimpleHttpInvokerRequestExecutor
+ * @since 1.1
  */
 public class CommonsHttpInvokerRequestExecutor extends AbstractHttpInvokerRequestExecutor {
 
-	/**
-	 * Default timeout value if no HttpClient is explicitly provided.
-	 */
-	private static final int DEFAULT_READ_TIMEOUT_MILLISECONDS = (60 * 1000);
+    /**
+     * Default timeout value if no HttpClient is explicitly provided.
+     */
+    private static final int DEFAULT_READ_TIMEOUT_MILLISECONDS = (60 * 1000);
 
-	private HttpClient httpClient;
-
-
-	/**
-	 * Create a new CommonsHttpInvokerRequestExecutor with a default
-	 * HttpClient that uses a default MultiThreadedHttpConnectionManager.
-	 * Sets the socket read timeout to {@link #DEFAULT_READ_TIMEOUT_MILLISECONDS}.
-	 * @see org.apache.commons.httpclient.HttpClient
-	 * @see org.apache.commons.httpclient.MultiThreadedHttpConnectionManager
-	 */
-	public CommonsHttpInvokerRequestExecutor() {
-		this.httpClient = new HttpClient(new MultiThreadedHttpConnectionManager());
-		setReadTimeout(DEFAULT_READ_TIMEOUT_MILLISECONDS);
-	}
-
-	/**
-	 * Create a new CommonsHttpInvokerRequestExecutor with the given
-	 * HttpClient instance. The socket read timeout of the provided
-	 * HttpClient will not be changed.
-	 * @param httpClient the HttpClient instance to use for this request executor
-	 */
-	public CommonsHttpInvokerRequestExecutor(HttpClient httpClient) {
-		this.httpClient = httpClient;
-	}
+    private HttpClient httpClient;
 
 
-	/**
-	 * Set the HttpClient instance to use for this request executor.
-	 */
-	public void setHttpClient(HttpClient httpClient) {
-		this.httpClient = httpClient;
-	}
+    /**
+     * Create a new CommonsHttpInvokerRequestExecutor with a default
+     * HttpClient that uses a default MultiThreadedHttpConnectionManager.
+     * Sets the socket read timeout to {@link #DEFAULT_READ_TIMEOUT_MILLISECONDS}.
+     *
+     * @see org.apache.commons.httpclient.HttpClient
+     * @see org.apache.commons.httpclient.MultiThreadedHttpConnectionManager
+     */
+    public CommonsHttpInvokerRequestExecutor() {
+        this.httpClient = new HttpClient(new MultiThreadedHttpConnectionManager());
+        setReadTimeout(DEFAULT_READ_TIMEOUT_MILLISECONDS);
+    }
 
-	/**
-	 * Return the HttpClient instance that this request executor uses.
-	 */
-	public HttpClient getHttpClient() {
-		return this.httpClient;
-	}
-
-	/**
-	 * Set the connection timeout for the underlying HttpClient.
-	 * A timeout value of 0 specifies an infinite timeout.
-	 * @param timeout the timeout value in milliseconds
-	 * @see org.apache.commons.httpclient.params.HttpConnectionManagerParams#setConnectionTimeout(int)
-	 */
-	public void setConnectTimeout(int timeout) {
-		Assert.isTrue(timeout >= 0, "Timeout must be a non-negative value");
-		this.httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(timeout);
-	}
-
-	/**
-	 * Set the socket read timeout for the underlying HttpClient.
-	 * A timeout value of 0 specifies an infinite timeout.
-	 * @param timeout the timeout value in milliseconds
-	 * @see org.apache.commons.httpclient.params.HttpConnectionManagerParams#setSoTimeout(int)
-	 * @see #DEFAULT_READ_TIMEOUT_MILLISECONDS
-	 */
-	public void setReadTimeout(int timeout) {
-		Assert.isTrue(timeout >= 0, "Timeout must be a non-negative value");
-		this.httpClient.getHttpConnectionManager().getParams().setSoTimeout(timeout);
-	}
+    /**
+     * Create a new CommonsHttpInvokerRequestExecutor with the given
+     * HttpClient instance. The socket read timeout of the provided
+     * HttpClient will not be changed.
+     *
+     * @param httpClient the HttpClient instance to use for this request executor
+     */
+    public CommonsHttpInvokerRequestExecutor(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
 
-	/**
-	 * Execute the given request through Commons HttpClient.
-	 * <p>This method implements the basic processing workflow:
-	 * The actual work happens in this class's template methods.
-	 * @see #createPostMethod
-	 * @see #setRequestBody
-	 * @see #executePostMethod
-	 * @see #validateResponse
-	 * @see #getResponseBody
-	 */
-	@Override
-	protected RemoteInvocationResult doExecuteRequest(
-			HttpInvokerClientConfiguration config, ByteArrayOutputStream baos)
-			throws IOException, ClassNotFoundException {
 
-		PostMethod postMethod = createPostMethod(config);
-		try {
-			setRequestBody(config, postMethod, baos);
-			executePostMethod(config, getHttpClient(), postMethod);
-			validateResponse(config, postMethod);
-			InputStream responseBody = getResponseBody(config, postMethod);
-			return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
-		}
-		finally {
-			// Need to explicitly release because it might be pooled.
-			postMethod.releaseConnection();
-		}
-	}
+    /**
+     * 以HTTP协议发起一次远程调用
+     *
+     * @see #createPostMethod
+     * @see #setRequestBody
+     * @see #executePostMethod
+     * @see #validateResponse
+     * @see #getResponseBody
+     */
+    @Override
+    protected RemoteInvocationResult doExecuteRequest(HttpInvokerClientConfiguration config, ByteArrayOutputStream baos) throws IOException, ClassNotFoundException {
 
-	/**
-	 * Create a PostMethod for the given configuration.
-	 * <p>The default implementation creates a standard PostMethod with
-	 * "application/x-java-serialized-object" as "Content-Type" header.
-	 * @param config the HTTP invoker configuration that specifies the
-	 * target service
-	 * @return the PostMethod instance
-	 * @throws IOException if thrown by I/O methods
-	 */
-	protected PostMethod createPostMethod(HttpInvokerClientConfiguration config) throws IOException {
-		PostMethod postMethod = new PostMethod(config.getServiceUrl());
-		LocaleContext locale = LocaleContextHolder.getLocaleContext();
-		if (locale != null) {
-			postMethod.addRequestHeader(HTTP_HEADER_ACCEPT_LANGUAGE, StringUtils.toLanguageTag(locale.getLocale()));
-		}
-		if (isAcceptGzipEncoding()) {
-			postMethod.addRequestHeader(HTTP_HEADER_ACCEPT_ENCODING, ENCODING_GZIP);
-		}
-		return postMethod;
-	}
+        // 根据HTTP请求的服务配置，创建一个post请求
+        PostMethod postMethod = createPostMethod(config);
+        try {
+            // 设置请求体
+            setRequestBody(config, postMethod, baos);
+            // 执行post请求
+            executePostMethod(config, getHttpClient(), postMethod);
+            // 检查是否调用成功，如果不成功，则抛出IOException异常
+            validateResponse(config, postMethod);
+            // 获取服务端的响应数据
+            InputStream responseBody = getResponseBody(config, postMethod);
+            // 将响应体反序列化为RemoteInvocationResult
+            return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
+        } finally {
+            // 需要显式释放，因为它可能已合并
+            postMethod.releaseConnection();
+        }
+    }
 
-	/**
-	 * Set the given serialized remote invocation as request body.
-	 * <p>The default implementation simply sets the serialized invocation as the
-	 * PostMethod's request body. This can be overridden, for example, to write a
-	 * specific encoding and to potentially set appropriate HTTP request headers.
-	 * @param config the HTTP invoker configuration that specifies the target service
-	 * @param postMethod the PostMethod to set the request body on
-	 * @param baos the ByteArrayOutputStream that contains the serialized
-	 * RemoteInvocation object
-	 * @throws IOException if thrown by I/O methods
-	 * @see org.apache.commons.httpclient.methods.PostMethod#setRequestBody(java.io.InputStream)
-	 * @see org.apache.commons.httpclient.methods.PostMethod#setRequestEntity
-	 * @see org.apache.commons.httpclient.methods.InputStreamRequestEntity
-	 */
-	protected void setRequestBody(
-			HttpInvokerClientConfiguration config, PostMethod postMethod, ByteArrayOutputStream baos)
-			throws IOException {
 
-		postMethod.setRequestEntity(new ByteArrayRequestEntity(baos.toByteArray(), getContentType()));
-	}
+    /**
+     * Set the HttpClient instance to use for this request executor.
+     */
+    public void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
-	/**
-	 * Execute the given PostMethod instance.
-	 * @param config the HTTP invoker configuration that specifies the target service
-	 * @param httpClient the HttpClient to execute on
-	 * @param postMethod the PostMethod to execute
-	 * @throws IOException if thrown by I/O methods
-	 * @see org.apache.commons.httpclient.HttpClient#executeMethod(org.apache.commons.httpclient.HttpMethod)
-	 */
-	protected void executePostMethod(
-			HttpInvokerClientConfiguration config, HttpClient httpClient, PostMethod postMethod)
-			throws IOException {
+    /**
+     * Return the HttpClient instance that this request executor uses.
+     */
+    public HttpClient getHttpClient() {
+        return this.httpClient;
+    }
 
-		httpClient.executeMethod(postMethod);
-	}
+    /**
+     * Set the connection timeout for the underlying HttpClient.
+     * A timeout value of 0 specifies an infinite timeout.
+     *
+     * @param timeout the timeout value in milliseconds
+     * @see org.apache.commons.httpclient.params.HttpConnectionManagerParams#setConnectionTimeout(int)
+     */
+    public void setConnectTimeout(int timeout) {
+        Assert.isTrue(timeout >= 0, "Timeout must be a non-negative value");
+        this.httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(timeout);
+    }
 
-	/**
-	 * Validate the given response as contained in the PostMethod object,
-	 * throwing an exception if it does not correspond to a successful HTTP response.
-	 * <p>Default implementation rejects any HTTP status code beyond 2xx, to avoid
-	 * parsing the response body and trying to deserialize from a corrupted stream.
-	 * @param config the HTTP invoker configuration that specifies the target service
-	 * @param postMethod the executed PostMethod to validate
-	 * @throws IOException if validation failed
-	 * @see org.apache.commons.httpclient.methods.PostMethod#getStatusCode()
-	 * @see org.apache.commons.httpclient.HttpException
-	 */
-	protected void validateResponse(HttpInvokerClientConfiguration config, PostMethod postMethod)
-			throws IOException {
+    /**
+     * Set the socket read timeout for the underlying HttpClient.
+     * A timeout value of 0 specifies an infinite timeout.
+     *
+     * @param timeout the timeout value in milliseconds
+     * @see org.apache.commons.httpclient.params.HttpConnectionManagerParams#setSoTimeout(int)
+     * @see #DEFAULT_READ_TIMEOUT_MILLISECONDS
+     */
+    public void setReadTimeout(int timeout) {
+        Assert.isTrue(timeout >= 0, "Timeout must be a non-negative value");
+        this.httpClient.getHttpConnectionManager().getParams().setSoTimeout(timeout);
+    }
 
-		if (postMethod.getStatusCode() >= 300) {
-			throw new HttpException(
-					"Did not receive successful HTTP response: status code = " + postMethod.getStatusCode() +
-					", status message = [" + postMethod.getStatusText() + "]");
-		}
-	}
+    /**
+     * Create a PostMethod for the given configuration.
+     * <p>The default implementation creates a standard PostMethod with
+     * "application/x-java-serialized-object" as "Content-Type" header.
+     *
+     * @param config the HTTP invoker configuration that specifies the
+     *               target service
+     * @return the PostMethod instance
+     * @throws IOException if thrown by I/O methods
+     */
+    protected PostMethod createPostMethod(HttpInvokerClientConfiguration config) throws IOException {
+        PostMethod postMethod = new PostMethod(config.getServiceUrl());
+        LocaleContext locale = LocaleContextHolder.getLocaleContext();
+        if (locale != null) {
+            postMethod.addRequestHeader(HTTP_HEADER_ACCEPT_LANGUAGE, StringUtils.toLanguageTag(locale.getLocale()));
+        }
+        if (isAcceptGzipEncoding()) {
+            postMethod.addRequestHeader(HTTP_HEADER_ACCEPT_ENCODING, ENCODING_GZIP);
+        }
+        return postMethod;
+    }
 
-	/**
-	 * Extract the response body from the given executed remote invocation request.
-	 * <p>The default implementation simply fetches the PostMethod's response body stream.
-	 * If the response is recognized as GZIP response, the InputStream will get wrapped
-	 * in a GZIPInputStream.
-	 * @param config the HTTP invoker configuration that specifies the target service
-	 * @param postMethod the PostMethod to read the response body from
-	 * @return an InputStream for the response body
-	 * @throws IOException if thrown by I/O methods
-	 * @see #isGzipResponse
-	 * @see java.util.zip.GZIPInputStream
-	 * @see org.apache.commons.httpclient.methods.PostMethod#getResponseBodyAsStream()
-	 * @see org.apache.commons.httpclient.methods.PostMethod#getResponseHeader(String)
-	 */
-	protected InputStream getResponseBody(HttpInvokerClientConfiguration config, PostMethod postMethod)
-			throws IOException {
+    /**
+     * Set the given serialized remote invocation as request body.
+     * <p>The default implementation simply sets the serialized invocation as the
+     * PostMethod's request body. This can be overridden, for example, to write a
+     * specific encoding and to potentially set appropriate HTTP request headers.
+     *
+     * @param config     the HTTP invoker configuration that specifies the target service
+     * @param postMethod the PostMethod to set the request body on
+     * @param baos       the ByteArrayOutputStream that contains the serialized
+     *                   RemoteInvocation object
+     * @throws IOException if thrown by I/O methods
+     * @see org.apache.commons.httpclient.methods.PostMethod#setRequestBody(java.io.InputStream)
+     * @see org.apache.commons.httpclient.methods.PostMethod#setRequestEntity
+     * @see org.apache.commons.httpclient.methods.InputStreamRequestEntity
+     */
+    protected void setRequestBody(HttpInvokerClientConfiguration config, PostMethod postMethod, ByteArrayOutputStream baos) throws IOException {
 
-		if (isGzipResponse(postMethod)) {
-			return new GZIPInputStream(postMethod.getResponseBodyAsStream());
-		}
-		else {
-			return postMethod.getResponseBodyAsStream();
-		}
-	}
+        postMethod.setRequestEntity(new ByteArrayRequestEntity(baos.toByteArray(), getContentType()));
+    }
 
-	/**
-	 * Determine whether the given response indicates a GZIP response.
-	 * <p>The default implementation checks whether the HTTP "Content-Encoding"
-	 * header contains "gzip" (in any casing).
-	 * @param postMethod the PostMethod to check
-	 * @return whether the given response indicates a GZIP response
-	 */
-	protected boolean isGzipResponse(PostMethod postMethod) {
-		Header encodingHeader = postMethod.getResponseHeader(HTTP_HEADER_CONTENT_ENCODING);
-		return (encodingHeader != null && encodingHeader.getValue() != null &&
-				encodingHeader.getValue().toLowerCase().contains(ENCODING_GZIP));
-	}
+    /**
+     * Execute the given PostMethod instance.
+     *
+     * @param config     the HTTP invoker configuration that specifies the target service
+     * @param httpClient the HttpClient to execute on
+     * @param postMethod the PostMethod to execute
+     * @throws IOException if thrown by I/O methods
+     * @see org.apache.commons.httpclient.HttpClient#executeMethod(org.apache.commons.httpclient.HttpMethod)
+     */
+    protected void executePostMethod(HttpInvokerClientConfiguration config, HttpClient httpClient, PostMethod postMethod) throws IOException {
+
+        httpClient.executeMethod(postMethod);
+    }
+
+    /**
+     * Validate the given response as contained in the PostMethod object,
+     * throwing an exception if it does not correspond to a successful HTTP response.
+     * <p>Default implementation rejects any HTTP status code beyond 2xx, to avoid
+     * parsing the response body and trying to deserialize from a corrupted stream.
+     *
+     * @param config     the HTTP invoker configuration that specifies the target service
+     * @param postMethod the executed PostMethod to validate
+     * @throws IOException if validation failed
+     * @see org.apache.commons.httpclient.methods.PostMethod#getStatusCode()
+     * @see org.apache.commons.httpclient.HttpException
+     */
+    protected void validateResponse(HttpInvokerClientConfiguration config, PostMethod postMethod) throws IOException {
+
+        if (postMethod.getStatusCode() >= 300) {
+            throw new HttpException(
+                    "Did not receive successful HTTP response: status code = " + postMethod.getStatusCode() +
+                            ", status message = [" + postMethod.getStatusText() + "]");
+        }
+    }
+
+    /**
+     * Extract the response body from the given executed remote invocation request.
+     * <p>The default implementation simply fetches the PostMethod's response body stream.
+     * If the response is recognized as GZIP response, the InputStream will get wrapped
+     * in a GZIPInputStream.
+     *
+     * @param config     the HTTP invoker configuration that specifies the target service
+     * @param postMethod the PostMethod to read the response body from
+     * @return an InputStream for the response body
+     * @throws IOException if thrown by I/O methods
+     * @see #isGzipResponse
+     * @see java.util.zip.GZIPInputStream
+     * @see org.apache.commons.httpclient.methods.PostMethod#getResponseBodyAsStream()
+     * @see org.apache.commons.httpclient.methods.PostMethod#getResponseHeader(String)
+     */
+    protected InputStream getResponseBody(HttpInvokerClientConfiguration config, PostMethod postMethod) throws IOException {
+
+        if (isGzipResponse(postMethod)) {
+            return new GZIPInputStream(postMethod.getResponseBodyAsStream());
+        } else {
+            return postMethod.getResponseBodyAsStream();
+        }
+    }
+
+    /**
+     * Determine whether the given response indicates a GZIP response.
+     * <p>The default implementation checks whether the HTTP "Content-Encoding"
+     * header contains "gzip" (in any casing).
+     *
+     * @param postMethod the PostMethod to check
+     * @return whether the given response indicates a GZIP response
+     */
+    protected boolean isGzipResponse(PostMethod postMethod) {
+        Header encodingHeader = postMethod.getResponseHeader(HTTP_HEADER_CONTENT_ENCODING);
+        return (encodingHeader != null && encodingHeader.getValue() != null &&
+                encodingHeader.getValue().toLowerCase().contains(ENCODING_GZIP));
+    }
 
 }

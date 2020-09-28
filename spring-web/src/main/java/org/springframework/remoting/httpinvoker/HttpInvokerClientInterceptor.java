@@ -64,8 +64,7 @@ import org.springframework.remoting.support.RemoteInvocationResult;
  * @see HttpInvokerProxyFactoryBean
  * @see java.rmi.server.RMIClassLoader
  */
-public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor
-		implements MethodInterceptor, HttpInvokerClientConfiguration {
+public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor implements MethodInterceptor, HttpInvokerClientConfiguration {
 
 	private String codebaseUrl;
 
@@ -136,6 +135,7 @@ public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor
 			return "HTTP invoker proxy for service URL [" + getServiceUrl() + "]";
 		}
 
+		// 将aop的方法调用转成Spring中的远程调用对象
 		RemoteInvocation invocation = createRemoteInvocation(methodInvocation);
 		RemoteInvocationResult result = null;
 		try {
@@ -168,8 +168,7 @@ public class HttpInvokerClientInterceptor extends RemoteInvocationBasedAccessor
 	 * @return the RemoteInvocationResult object
 	 * @throws Exception in case of errors
 	 */
-	protected RemoteInvocationResult executeRequest(
-			RemoteInvocation invocation, MethodInvocation originalInvocation) throws Exception {
+	protected RemoteInvocationResult executeRequest(RemoteInvocation invocation, MethodInvocation originalInvocation) throws Exception {
 
 		return executeRequest(invocation);
 	}
