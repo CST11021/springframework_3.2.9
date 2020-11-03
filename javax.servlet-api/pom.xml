@@ -10,6 +10,7 @@
     </parent>
 
     <groupId>javax.servlet</groupId>
+    <!-- 注意：3.0之前的artifactId是：servlet-api -->
     <artifactId>javax.servlet-api</artifactId>
     <version>3.0.1</version>
     <packaging>jar</packaging>

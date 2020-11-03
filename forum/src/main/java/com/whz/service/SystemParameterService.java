@@ -20,6 +20,7 @@ public class SystemParameterService {
     private static final Logger logger = Logger.getLogger(SystemParameterService.class);
 
     public void init(){
+        // 如果日志乱码在idea的tomcat配置中将VM options设置为：-Dfile.encoding=UTF-8
         logger.info("开始系统参数表...");
         sysParams = getSystemParameter();
         logger.info("共初始化完" + sysParams.size() + "个系统参数.");
