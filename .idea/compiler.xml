@@ -13,6 +13,7 @@
         <module name="spring-context" />
         <module name="spring-context-support" />
         <module name="spring-jdbc" />
+        <module name="spring-test" />
         <module name="spring-tx" />
         <module name="spring-web" />
         <module name="spring-webmvc" />
